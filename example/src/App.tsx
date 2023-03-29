@@ -24,14 +24,13 @@ export default function App() {
   const [hasPermission, setHasPermission] = React.useState(false);
   const [ocr, setOcr] = React.useState<OCRFrame>();
   const [pixelRatio, setPixelRatio] = React.useState<number>(1);
-  const [language, setLanguage] = React.useState<Code>(by639_2B['eng'])
+  const [language, setLanguage] = React.useState<Code>(by639_2B['jpn'])
   const devices = useCameraDevices();
   const device = devices.back;
-  setLanguage(by639_2B['jpn'])
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
-    const data = scanOCR(frame);
+    const data = scanOCR(frame, language.iso639_2T);
     runOnJS(setOcr)(data);
   }, []);
 
@@ -98,7 +97,7 @@ export default function App() {
     </>
   ) : (
     <View>
-      <Text>No available cameras -- language selected: {language}</Text>
+      <Text>No available cameras -- language selected: {language.nativeName}</Text>
     </View>
   );
 }

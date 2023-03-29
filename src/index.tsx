@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
 import type { Frame } from 'react-native-vision-camera';
+import { Alert } from 'react-native';
 
 type BoundingFrame = {
   x: number;
@@ -46,8 +47,9 @@ export type OCRFrame = {
  * Scans OCR.
  */
 
-export function scanOCR(frame: Frame): OCRFrame {
+export function scanOCR(frame: Frame, language: string): OCRFrame {
   'worklet';
+  // todo: call different __scanOCR based on language chosen
   // @ts-ignore
   return __scanOCR(frame);
 }

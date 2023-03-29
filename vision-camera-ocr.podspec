@@ -17,8 +17,12 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "GoogleMLKit/TextRecognition", "3.2.0"
+  # To recognize Chinese script
   s.dependency "GoogleMLKit/TextRecognitionChinese", "3.2.0"
+  # To recognize Devanagari script
   s.dependency "GoogleMLKit/TextRecognitionDevanagari", "3.2.0"
+  # To recognize Japanese script
   s.dependency "GoogleMLKit/TextRecognitionJapanese", "3.2.0"
+  # To recognize Korean script
   s.dependency "GoogleMLKit/TextRecognitionKorean", "3.2.0"
 end
