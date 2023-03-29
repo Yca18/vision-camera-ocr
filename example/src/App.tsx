@@ -18,19 +18,20 @@ import {
   useFrameProcessor,
   Camera,
 } from 'react-native-vision-camera';
-import {by639_2B} from 'iso-language-codes'
+import { by639_2B } from 'iso-language-codes';
 
 export default function App() {
   const [hasPermission, setHasPermission] = React.useState(false);
   const [ocr, setOcr] = React.useState<OCRFrame>();
   const [pixelRatio, setPixelRatio] = React.useState<number>(1);
-  const [language, setLanguage] = React.useState<Code>(by639_2B['jpn'])
+  const [language, setLanguage] = React.useState<Code>(by639_2B['jpn']);
   const devices = useCameraDevices();
   const device = devices.back;
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
-    const data = scanOCR(frame, language.iso639_2T);
+    const languageCode = language.iso639_2T;
+    const data = scanOCR(frame, languageCode);
     runOnJS(setOcr)(data);
   }, []);
 

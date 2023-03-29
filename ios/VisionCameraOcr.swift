@@ -107,7 +107,7 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
     }
     
     @objc
-    public static func callback(_ frame: Frame!, withArgs _: [Any]!) -> Any! {
+    public static func callback(_ frame: Frame!, withArgs args: [Any]!) -> Any! {
         guard (CMSampleBufferGetImageBuffer(frame.buffer) != nil) else {
           print("Failed to get image buffer from sample buffer.")
           return nil
@@ -119,11 +119,31 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
         visionImage.orientation = .up
         
         var result: Text
+        let textRecognizer: TextRecognizer;
+        let languageCodeArg: Any = args[0]
+        var languageCode: String
+
+        if let langCode = languageCodeArg as? String {
+            languageCode = langCode
+        } else {
+            languageCode = "eng"
+        }
+
+        switch languageCode {
+            case "chi":
+                textRecognizer = TextRecognizer.textRecognizer(options: ChineseTextRecognizerOptions())
+            case "hin", "san", "pra":
+                textRecognizer = TextRecognizer.textRecognizer(options: DevanagariTextRecognizerOptions())
+            case "jpn":
+                textRecognizer = TextRecognizer.textRecognizer(options: JapaneseTextRecognizerOptions())
+            case "kor":
+                textRecognizer = TextRecognizer.textRecognizer(options: KoreanTextRecognizerOptions())
+            default:
+                textRecognizer = TextRecognizer.textRecognizer(options: TextRecognizerOptions())
+        }
 
         do {
-          let textRecognizerOptions = JapaneseTextRecognizerOptions()
-          result = try TextRecognizer.textRecognizer(options: textRecognizerOptions)
-            .results(in: visionImage)
+            result = try textRecognizer.results(in: visionImage)
         } catch let error {
           print("Failed to recognize text with error: \(error.localizedDescription).")
           return nil
