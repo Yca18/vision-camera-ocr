@@ -124,5 +124,8 @@
         }
       ]
     ]
+  },
+  "dependencies": {
+    "iso-language-codes": "^1.1.0"
   }
 }

@@ -18,13 +18,16 @@ import {
   useFrameProcessor,
   Camera,
 } from 'react-native-vision-camera';
+import {by639_2B} from 'iso-language-codes'
 
 export default function App() {
   const [hasPermission, setHasPermission] = React.useState(false);
   const [ocr, setOcr] = React.useState<OCRFrame>();
   const [pixelRatio, setPixelRatio] = React.useState<number>(1);
+  const [language, setLanguage] = React.useState<Code>(by639_2B['eng'])
   const devices = useCameraDevices();
   const device = devices.back;
+  setLanguage(by639_2B['jpn'])
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
@@ -95,7 +98,7 @@ export default function App() {
     </>
   ) : (
     <View>
-      <Text>No available cameras</Text>
+      <Text>No available cameras -- language selected: {language}</Text>
     </View>
   );
 }

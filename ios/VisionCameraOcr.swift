@@ -3,8 +3,7 @@ import AVFoundation
 import MLKitVision
 import MLKitTextRecognition
 import MLKitTextRecognitionChinese
-import MLKitTextRecognitionCommon
-import MLKitTextRecognitionDevanagiri
+import MLKitTextRecognitionDevanagari
 import MLKitTextRecognitionJapanese
 import MLKitTextRecognitionKorean
 
