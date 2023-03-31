@@ -46,9 +46,9 @@ export type OCRFrame = {
  * Scans OCR.
  */
 
-export function scanOCR(frame: Frame, languageCode: string): OCRFrame {
+export function scanOCR(frame: Frame, languageCode: string = 'eng'): OCRFrame {
   'worklet';
-  // todo: call different __scanOCR based on language chosen
+
   // @ts-ignore
   return __scanOCR(frame, languageCode);
 }

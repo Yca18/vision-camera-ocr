@@ -119,28 +119,8 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
         visionImage.orientation = .up
         
         var result: Text
-        let textRecognizer: TextRecognizer;
-        let languageCodeArg: Any = args[0]
-        var languageCode: String
 
-        if let langCode = languageCodeArg as? String {
-            languageCode = langCode
-        } else {
-            languageCode = "eng"
-        }
-
-        switch languageCode {
-            case "chi":
-                textRecognizer = TextRecognizer.textRecognizer(options: ChineseTextRecognizerOptions())
-            case "hin", "san", "pra":
-                textRecognizer = TextRecognizer.textRecognizer(options: DevanagariTextRecognizerOptions())
-            case "jpn":
-                textRecognizer = TextRecognizer.textRecognizer(options: JapaneseTextRecognizerOptions())
-            case "kor":
-                textRecognizer = TextRecognizer.textRecognizer(options: KoreanTextRecognizerOptions())
-            default:
-                textRecognizer = TextRecognizer.textRecognizer(options: TextRecognizerOptions())
-        }
+        let textRecognizer: TextRecognizer = TextRecognizer.textRecognizer(options: getTextRecognizerOptionsForCode(languageCode: args[0]))
 
         do {
             result = try textRecognizer.results(in: visionImage)
@@ -155,5 +135,29 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
                 "blocks": getBlockArray(result.blocks),
             ]
         ]
+    }
+    
+    @objc
+    private static func getTextRecognizerOptionsForCode(languageCode: Any) -> CommonTextRecognizerOptions! {
+        let foundCode: String
+        
+        if let langCode = languageCode as? String {
+            foundCode = langCode
+        } else {
+            foundCode = "eng"
+        }
+
+        switch foundCode {
+            case "chi":
+                return ChineseTextRecognizerOptions()
+            case "hin", "san", "pra":
+                return DevanagariTextRecognizerOptions()
+            case "jpn":
+                return JapaneseTextRecognizerOptions()
+            case "kor":
+                return KoreanTextRecognizerOptions()
+            default:
+                return TextRecognizerOptions()
+        }
     }
 }
