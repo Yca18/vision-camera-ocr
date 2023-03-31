@@ -46,8 +46,9 @@ export type OCRFrame = {
  * Scans OCR.
  */
 
-export function scanOCR(frame: Frame): OCRFrame {
+export function scanOCR(frame: Frame, languageCode: string = 'eng'): OCRFrame {
   'worklet';
+
   // @ts-ignore
-  return __scanOCR(frame);
+  return __scanOCR(frame, languageCode);
 }

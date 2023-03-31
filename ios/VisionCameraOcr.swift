@@ -2,12 +2,13 @@ import Vision
 import AVFoundation
 import MLKitVision
 import MLKitTextRecognition
+import MLKitTextRecognitionChinese
+import MLKitTextRecognitionDevanagari
+import MLKitTextRecognitionJapanese
+import MLKitTextRecognitionKorean
 
 @objc(OCRFrameProcessorPlugin)
 public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
-    
-    private static var textRecognizer = TextRecognizer.textRecognizer()
-    
     private static func getBlockArray(_ blocks: [TextBlock]) -> [[String: Any]] {
         
         var blockArray: [[String: Any]] = []
@@ -106,8 +107,7 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
     }
     
     @objc
-    public static func callback(_ frame: Frame!, withArgs _: [Any]!) -> Any! {
-        
+    public static func callback(_ frame: Frame!, withArgs args: [Any]!) -> Any! {
         guard (CMSampleBufferGetImageBuffer(frame.buffer) != nil) else {
           print("Failed to get image buffer from sample buffer.")
           return nil
@@ -119,9 +119,11 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
         visionImage.orientation = .up
         
         var result: Text
+
+        let textRecognizer: TextRecognizer = TextRecognizer.textRecognizer(options: getTextRecognizerOptionsForCode(languageCode: args[0]))
+
         do {
-          result = try TextRecognizer.textRecognizer()
-            .results(in: visionImage)
+            result = try textRecognizer.results(in: visionImage)
         } catch let error {
           print("Failed to recognize text with error: \(error.localizedDescription).")
           return nil
@@ -133,5 +135,29 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
                 "blocks": getBlockArray(result.blocks),
             ]
         ]
+    }
+    
+    @objc
+    private static func getTextRecognizerOptionsForCode(languageCode: Any) -> CommonTextRecognizerOptions! {
+        let foundCode: String
+        
+        if let langCode = languageCode as? String {
+            foundCode = langCode
+        } else {
+            foundCode = "eng"
+        }
+
+        switch foundCode {
+            case "chi":
+                return ChineseTextRecognizerOptions()
+            case "hin", "san", "pra":
+                return DevanagariTextRecognizerOptions()
+            case "jpn":
+                return JapaneseTextRecognizerOptions()
+            case "kor":
+                return KoreanTextRecognizerOptions()
+            default:
+                return TextRecognizerOptions()
+        }
     }
 }

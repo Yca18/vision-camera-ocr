@@ -99,8 +99,9 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
     override fun callback(frame: ImageProxy, params: Array<Any>): Any? {
 
         val result = WritableNativeMap()
-
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val languageCode = params[0]
+        val recognizerOptions = getTextRecognizerOptionsForCode(langugeCode)
+        val recognizer = TextRecognition.getClient(recognizerOptions)
 
         @SuppressLint("UnsafeOptInUsageError")
         val mediaImage: Image? = frame.getImage()
@@ -120,5 +121,19 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
         val data = WritableNativeMap()
         data.putMap("result", result)
         return data
+    }
+
+    private fun getTextRecognizerOptionsForCode(languageCode: Any) -> CommonTextRecognizerOptions! {
+
+        val recognizerOptions = when(languageCode) {
+            "chi" -> ChineseTextRecognizerOptions.Builder().build()
+            "hin", "san", "pra" -> DevanagariTextRecognizerOptions.Builder().build()
+            "jpn" -> JapaneseTextRecognizerOptions.Builder().build()
+            "kor" -> KoreanTextRecognizerOptions.Builder().build()
+            else -> TextRecognizerOptions.DEFAULT_OPTIONS
+        }
+
+        return recognizerOptions
+
     }
 }
