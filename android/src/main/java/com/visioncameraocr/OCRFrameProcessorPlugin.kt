@@ -12,7 +12,12 @@ import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.mrousavy.camera.frameprocessor.FrameProcessorPlugin
 
 class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
@@ -99,8 +104,8 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
     override fun callback(frame: ImageProxy, params: Array<Any>): Any? {
 
         val result = WritableNativeMap()
-        val languageCode = params[0]
-        val recognizerOptions = getTextRecognizerOptionsForCode(langugeCode)
+        val languageCode: String = params[0] as String
+        val recognizerOptions: TextRecognizerOptionsInterface = getTextRecognizerOptionsForCode(languageCode)
         val recognizer = TextRecognition.getClient(recognizerOptions)
 
         @SuppressLint("UnsafeOptInUsageError")
@@ -123,7 +128,7 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
         return data
     }
 
-    private fun getTextRecognizerOptionsForCode(languageCode: Any) -> CommonTextRecognizerOptions! {
+    private fun getTextRecognizerOptionsForCode(languageCode: String): TextRecognizerOptionsInterface {
 
         val recognizerOptions = when(languageCode) {
             "chi" -> ChineseTextRecognizerOptions.Builder().build()
