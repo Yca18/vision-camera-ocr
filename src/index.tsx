@@ -56,7 +56,7 @@ export type OCRCropRect = {
 export function scanOCR(
   frame: Frame,
   languageCode: string = 'eng',
-  cropRect?: OCRCropRect
+  cropRect: OCRCropRect = {}
 ): OCRFrame {
   'worklet';
 
