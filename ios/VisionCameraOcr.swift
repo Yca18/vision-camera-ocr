@@ -130,7 +130,7 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
 
         if let definedCropX = cropX, let definedCropY = cropY, let definedCropWidth = cropWidth, let definedCropHeight = cropHeight {
             let cropRect: CGRect = CGRect(x: definedCropX, y: definedCropY, width: definedCropWidth, height: definedCropHeight)
-            ciImage = ciImage.cropped(to: cropRect)
+            ciImage = ciImage.oriented(.up).cropped(to: cropRect)
         }
 
         let context = CIContext(options: nil)
