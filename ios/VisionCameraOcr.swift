@@ -113,7 +113,17 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
           return nil
         }
 
+        // cropPoints is an array of { x: x0, y: y0 } coordinates
+        // originating at top-left and moving clockwise
 
+        let cropX: Double = args[1]?.x;
+        let cropY: Double = args[1]?.y;
+        let cropWidth: Double = args[1]?.width;
+        let cropHeight: Double = args[1]?.height;
+        let cropRect: CGRect;
+        if(cropX && cropY && cropWidth && cropHeight){
+            cropRect = CGRect(x: cropX, y: cropY, width: cropWidth, height: cropHeight)
+        }
 
         // This doesn't work currently. Using the below code as a workaround per https://github.com/mrousavy/react-native-vision-camera/issues/1090
         // let visionImage = VisionImage(buffer: frame.buffer)
@@ -121,11 +131,13 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
         // TODO: Get camera orientation state
         // visionImage.orientation = .up
 
-
         let imageBuffer = CMSampleBufferGetImageBuffer(frame.buffer)!
-        let ciimage = CIImage(cvPixelBuffer: imageBuffer)
+        let ciImage = CIImage(cvPixelBuffer: imageBuffer)
+        if(cropRect){
+            ciImage = ciImage.cropped(to: cropRect)
+        }
         let context = CIContext(options: nil)
-        let cgImage = context.createCGImage(ciimage, from: ciimage.extent)!
+        let cgImage = context.createCGImage(ciImage, from: ciImage.extent)!
         let image = UIImage(cgImage: cgImage)
         let visionImage = VisionImage(image: image)
         visionImage.orientation = .up

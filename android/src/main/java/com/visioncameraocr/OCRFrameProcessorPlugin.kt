@@ -1,6 +1,7 @@
 package com.visioncameraocr
 
 import android.annotation.SuppressLint
+import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.graphics.Rect
 import android.media.Image
@@ -19,6 +20,8 @@ import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.mrousavy.camera.frameprocessor.FrameProcessorPlugin
+import java.nio.ByteArray
+import java.nio.ByteBuffer
 
 class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
 
@@ -105,6 +108,10 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
 
         val result = WritableNativeMap()
         val languageCode: String = params[0] as String
+        val cropX: Float? = params[1]?.x
+        val cropY: Float? = params[1]?.y
+        val cropWidth: Float? = params[1]?.width
+        val cropHeight: Float? = params[1]?.height
         val recognizerOptions: TextRecognizerOptionsInterface = getTextRecognizerOptionsForCode(languageCode)
         val recognizer = TextRecognition.getClient(recognizerOptions)
 
@@ -112,7 +119,22 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
         val mediaImage: Image? = frame.getImage()
 
         if (mediaImage != null) {
-            val image = InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
+            val imageBitmap: Bitmap?;
+
+            if( cropX && cropY && cropWidth && cropHeight) {
+                val buffer: ByteBuffer = mediaImage.planes[0].buffer
+                val bytes = ByteArray(buffer.remaining())
+                buffer.get(bytes)
+                imageBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                imageBitmap = Bitmap.createBitmap(imageBitmap, cropX, cropY, cropWidth, cropHeight)
+            }
+
+            val image: InputImage = if(imageBitmap) {
+                InputImage.fromBitmap(imageBitmap, frame.imageInfo.rotationDegrees)
+            } else {
+                InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
+            }
+
             val task: Task<Text> = recognizer.process(image)
             try {
                 val text: Text = Tasks.await<Text>(task)

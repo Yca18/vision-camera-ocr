@@ -42,13 +42,24 @@ export type OCRFrame = {
   result: Text;
 };
 
+export type OCRCropRect = {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+};
+
 /**
  * Scans OCR.
  */
 
-export function scanOCR(frame: Frame, languageCode: string = 'eng'): OCRFrame {
+export function scanOCR(
+  frame: Frame,
+  languageCode: string = 'eng',
+  cropRect?: OCRCropRect
+): OCRFrame {
   'worklet';
 
   // @ts-ignore
-  return __scanOCR(frame, languageCode);
+  return __scanOCR(frame, languageCode, cropRect);
 }
