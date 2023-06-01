@@ -112,19 +112,6 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
           print("Failed to get image buffer from sample buffer.")
           return nil
         }
-
-        // cropPoints is an array of { x: x0, y: y0 } coordinates
-        // originating at top-left and moving clockwise
-
-        let cropX: Double = args[1]?.x;
-        let cropY: Double = args[1]?.y;
-        let cropWidth: Double = args[1]?.width;
-        let cropHeight: Double = args[1]?.height;
-        let cropRect: CGRect;
-        if(cropX && cropY && cropWidth && cropHeight){
-            cropRect = CGRect(x: cropX, y: cropY, width: cropWidth, height: cropHeight)
-        }
-
         // This doesn't work currently. Using the below code as a workaround per https://github.com/mrousavy/react-native-vision-camera/issues/1090
         // let visionImage = VisionImage(buffer: frame.buffer)
 
@@ -132,10 +119,20 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
         // visionImage.orientation = .up
 
         let imageBuffer = CMSampleBufferGetImageBuffer(frame.buffer)!
-        let ciImage = CIImage(cvPixelBuffer: imageBuffer)
-        if(cropRect){
+        var ciImage = CIImage(cvPixelBuffer: imageBuffer)
+
+        // a Rect of { x, y, width, height }
+        let cropData = args[1] as? [String: Double]
+        let cropX: Double? = cropData?["x"];
+        let cropY: Double? = cropData?["y"];
+        let cropWidth: Double? = cropData?["width"];
+        let cropHeight: Double? = cropData?["height"];
+
+        if let definedCropX = cropX, let definedCropY = cropY, let definedCropWidth = cropWidth, let definedCropHeight = cropHeight {
+            let cropRect: CGRect = CGRect(x: definedCropX, y: definedCropY, width: definedCropWidth, height: definedCropHeight)
             ciImage = ciImage.cropped(to: cropRect)
         }
+
         let context = CIContext(options: nil)
         let cgImage = context.createCGImage(ciImage, from: ciImage.extent)!
         let image = UIImage(cgImage: cgImage)
