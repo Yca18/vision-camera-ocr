@@ -120,6 +120,8 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
 
         let imageBuffer = CMSampleBufferGetImageBuffer(frame.buffer)!
         var ciImage = CIImage(cvPixelBuffer: imageBuffer)
+        let pixelBufferWidth = CGFloat(CVPixelBufferGetWidth(imageBuffer))
+        let pixelBufferHeight = CGFloat(CVPixelBufferGetHeight(imageBuffer))
 
         // a Rect of { x, y, width, height }
         let cropData = args[1] as? [String: Double]
@@ -130,7 +132,10 @@ public class OCRFrameProcessorPlugin: NSObject, FrameProcessorPluginBase {
 
         if let definedCropX = cropX, let definedCropY = cropY, let definedCropWidth = cropWidth, let definedCropHeight = cropHeight {
             let cropRect: CGRect = CGRect(x: definedCropX, y: definedCropY, width: definedCropWidth, height: definedCropHeight)
-            ciImage = ciImage.oriented(.up).cropped(to: cropRect)
+            let rectY = ciImage.extent.height - cropRect.origin.y - cropRect.size.height
+            let invertedCropRect = CGRect(x: cropRect.origin.x, y: rectY, width: cropRect.size.width, height: cropRect.size.height)
+
+            ciImage = ciImage.oriented(.up).cropped(to: invertedCropRect)
         }
 
         let context = CIContext(options: nil)
