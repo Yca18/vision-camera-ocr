@@ -1,11 +1,15 @@
 package com.visioncameraocr
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.YuvImage
 import android.graphics.Point
 import android.graphics.Rect
 import android.media.Image
 import androidx.camera.core.ImageProxy
+import com.facebook.react.bridge.ReadableNativeMap
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
 import com.google.android.gms.tasks.Task
@@ -20,8 +24,9 @@ import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.mrousavy.camera.frameprocessor.FrameProcessorPlugin
-import java.nio.ByteArray
 import java.nio.ByteBuffer
+import java.io.ByteArrayOutputStream
+import kotlin.math.roundToInt
 
 class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
 
@@ -105,36 +110,37 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
     }
 
     override fun callback(frame: ImageProxy, params: Array<Any>): Any? {
-
         val result = WritableNativeMap()
         val languageCode: String = params[0] as String
-        val cropX: Float? = params[1]?.x
-        val cropY: Float? = params[1]?.y
-        val cropWidth: Float? = params[1]?.width
-        val cropHeight: Float? = params[1]?.height
+        val cropData: ReadableNativeMap? = params[1] as ReadableNativeMap?
+        val cropX: Int? = cropData?.getDouble("x")?.roundToInt();
+        val cropY: Int? = cropData?.getDouble("y")?.roundToInt();
+        val cropWidth: Int? = cropData?.getDouble("width")?.roundToInt();
+        val cropHeight: Int? = cropData?.getDouble("height")?.roundToInt();
         val recognizerOptions: TextRecognizerOptionsInterface = getTextRecognizerOptionsForCode(languageCode)
         val recognizer = TextRecognition.getClient(recognizerOptions)
 
         @SuppressLint("UnsafeOptInUsageError")
+        var imageBitmap: Bitmap? = null;
         val mediaImage: Image? = frame.getImage()
 
-        if (mediaImage != null) {
-            val imageBitmap: Bitmap?;
-
-            if( cropX && cropY && cropWidth && cropHeight) {
-                val buffer: ByteBuffer = mediaImage.planes[0].buffer
-                val bytes = ByteArray(buffer.remaining())
-                buffer.get(bytes)
-                imageBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                imageBitmap = Bitmap.createBitmap(imageBitmap, cropX, cropY, cropWidth, cropHeight)
+        if(mediaImage != null && cropX != null && cropY != null && cropWidth != null && cropHeight != null){
+            val bitmap: Bitmap? = imageToBitmap(mediaImage)
+            if(bitmap != null){
+                imageBitmap = Bitmap.createBitmap(bitmap, cropX, cropY, cropHeight, cropWidth)
             }
+        }
 
-            val image: InputImage = if(imageBitmap) {
-                InputImage.fromBitmap(imageBitmap, frame.imageInfo.rotationDegrees)
-            } else {
-                InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
-            }
+        var image: InputImage? = null;
+        if(imageBitmap != null) {
+            image = InputImage.fromBitmap(imageBitmap, frame.imageInfo.rotationDegrees)
+        } else if(mediaImage != null){
+            image = InputImage.fromMediaImage(mediaImage, frame.imageInfo.rotationDegrees)
+        }
 
+        frame.close()
+
+        if(image != null){
             val task: Task<Text> = recognizer.process(image)
             try {
                 val text: Text = Tasks.await<Text>(task)
@@ -143,11 +149,13 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
             } catch (e: Exception) {
                 return null
             }
-        }
 
-        val data = WritableNativeMap()
-        data.putMap("result", result)
-        return data
+            val data = WritableNativeMap()
+            data.putMap("result", result)
+            return data
+        } else {
+            return WritableNativeMap()
+        }
     }
 
     private fun getTextRecognizerOptionsForCode(languageCode: String): TextRecognizerOptionsInterface {
@@ -162,5 +170,33 @@ class OCRFrameProcessorPlugin: FrameProcessorPlugin("scanOCR") {
 
         return recognizerOptions
 
+    }
+
+    private fun imageToBitmap(image: Image): Bitmap? {
+        val nv21 = yuv420888ToNV21(image)
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
+        val out = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
+        val imageBytes = out.toByteArray()
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    }
+
+    private fun yuv420888ToNV21(image: Image): ByteArray {
+        val nv21: ByteArray
+        val yBuffer = image.planes[0].buffer
+        val uBuffer = image.planes[1].buffer
+        val vBuffer = image.planes[2].buffer
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        return nv21
     }
 }
